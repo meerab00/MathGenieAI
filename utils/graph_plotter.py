@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
 import re
-from langchain.schema import HumanMessage
+from langchain_core.messages import HumanMessage,SystemMessage
 
 matplotlib.use("Agg")
 
