@@ -227,7 +227,7 @@ if send_btn and (question or uploaded_file):
                     st.error("No response from AI")
                     st.stop()
 
-                st.markdown(response)
+                st.markdown(response, unsafe_allow_html=True)
 
                 st.session_state.messages.append({
                     "role": "assistant",
