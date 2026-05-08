@@ -148,6 +148,7 @@ with st.expander("⌨️ Math Keyboard"):
         st.info(f"Copied: {st.session_state.kb_insert}")
 
 # ── INPUT ──────────────────────────────────────────────
+
 uploaded_file = st.file_uploader(
     "Upload Image",
     type=["jpg", "jpeg", "png", "webp"]
@@ -155,8 +156,7 @@ uploaded_file = st.file_uploader(
 
 prefill = st.session_state.pop("prefill_question", "")
 
-default_text = st.session_state.get("kb_insert", "")
-
+# keyboard insert safe handle
 inserted = st.session_state.pop("kb_insert", "")
 
 user_input = st.text_area(
@@ -165,17 +165,12 @@ user_input = st.text_area(
     height=120,
     key="main_input"
 )
-    "Type your math question",
-    value=default_text,
-    height=120
-)
 
-if "kb_insert" in st.session_state:
-    st.session_state.kb_insert = ""
-
-question = user_input if user_input else prefill
-st.session_state["last_question"] = question
+# send button (IMPORTANT)
 send_btn = st.button("Solve Question")
+
+# final question handling
+question = user_input if user_input else prefill
 
 # ── PROCESS ────────────────────────────────────────────
 if send_btn and (question or uploaded_file):
