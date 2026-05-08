@@ -8,14 +8,14 @@ from utils.system_prompt import build_system_prompt
 from utils.math_keyboard import MATH_SYMBOLS
 import base64
 
-# ── CONFIG ─────────────────────────────────────────────
+# ── CONFIG ─────────────────────────────────────
 st.set_page_config(
     page_title="MathGenie AI",
     page_icon="🧞",
     layout="wide"
 )
 
-# ── SESSION STATE ──────────────────────────────────────
+# ── SESSION STATE ─────────────────────────────
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -28,35 +28,27 @@ if "groq_key" not in st.session_state:
     except:
         st.session_state.groq_key = ""
 
-# ── SIDEBAR ────────────────────────────────────────────
+if "user_text" not in st.session_state:
+    st.session_state.user_text = ""
+
+# ── SIDEBAR ────────────────────────────────────
 with st.sidebar:
 
     st.title("🧞 MathGenie AI")
 
-    api_key = st.text_input(
-        "Groq API Key",
-        type="password",
-        value=st.session_state.groq_key
-    )
+    api_key = st.text_input("Groq API Key", type="password")
 
     if api_key:
         st.session_state.groq_key = api_key
-        st.success("Key Saved")
 
     st.divider()
 
     st.session_state.topic = st.selectbox(
-        "Select Topic",
+        "Topic",
         [
-            "General",
-            "Calculus",
-            "Algebra",
-            "Statistics",
-            "Optimization Theory",
-            "Fuzzy Set Theory",
-            "Linear Algebra",
-            "ODE / PDE",
-            "Number Theory"
+            "General","Calculus","Algebra","Statistics",
+            "Optimization Theory","Fuzzy Set Theory",
+            "Linear Algebra","ODE / PDE","Number Theory"
         ]
     )
 
@@ -71,66 +63,47 @@ with st.sidebar:
 
     st.divider()
 
-    st.subheader("📝 Practice Questions")
+    st.subheader("📝 Practice")
 
     prac_topic = st.selectbox(
         "Choose Topic",
-        ["Calculus", "Algebra", "Statistics", "Optimization", "Fuzzy Sets"]
+        ["Calculus","Algebra","Statistics","Optimization","Fuzzy Sets"]
     )
 
     if st.button("Generate Questions"):
-
-        if not st.session_state.groq_key:
-            st.error("Enter API Key first")
-
+        if st.session_state.groq_key:
+            qs = generate_practice_questions(
+                st.session_state.groq_key,
+                prac_topic
+            )
+            st.session_state.practice_questions = qs
         else:
-            with st.spinner("Generating..."):
-                qs = generate_practice_questions(
-                    st.session_state.groq_key,
-                    prac_topic
-                )
-                st.session_state.practice_questions = qs
+            st.error("Enter API Key")
 
     if "practice_questions" in st.session_state:
         for i, q in enumerate(st.session_state.practice_questions):
             if st.button(f"Q{i+1}"):
-                st.session_state.prefill_question = q
+                st.session_state.user_text = q
 
     st.divider()
 
-    st.subheader("💬 History")
-
-    history = load_chats()
-
-    if history:
-        for i, chat in enumerate(history[:5]):
-            if st.button(chat["question"][:30], key=f"h{i}"):
-                st.session_state.messages = chat["messages"]
-                st.rerun()
-
     if st.button("Clear History"):
         clear_all_history()
-        st.success("Cleared")
 
     if st.button("New Chat"):
         st.session_state.messages = []
         st.rerun()
 
-# ── HEADER ─────────────────────────────────────────────
+# ── CHAT DISPLAY ──────────────────────────────
 st.title("🧞 MathGenie AI")
-st.write("Your AI Math Tutor")
 
-# ── CHAT DISPLAY ───────────────────────────────────────
 for msg in st.session_state.messages:
-
     with st.chat_message(msg["role"]):
-
         st.markdown(msg["content"])
-
         if msg.get("image"):
             st.image(msg["image"], width=250)
 
-# ── KEYBOARD ───────────────────────────────────────────
+# ── KEYBOARD ───────────────────────────────────
 with st.expander("⌨️ Math Keyboard"):
 
     for section, symbols in MATH_SYMBOLS.items():
@@ -142,48 +115,35 @@ with st.expander("⌨️ Math Keyboard"):
         for i, (col, sym) in enumerate(zip(cols, symbols)):
             with col:
                 if st.button(sym, key=f"{section}_{i}"):
-                    st.session_state.kb_insert = sym
+                    st.session_state.user_text += sym
 
-    if "kb_insert" in st.session_state:
-        st.info(f"Copied: {st.session_state.kb_insert}")
-
-# ── INPUT ──────────────────────────────────────────────
-
+# ── INPUT ──────────────────────────────────────
 uploaded_file = st.file_uploader(
     "Upload Image",
-    type=["jpg", "jpeg", "png", "webp"]
+    type=["jpg","jpeg","png","webp"]
 )
-
-prefill = st.session_state.pop("prefill_question", "")
-
-# keyboard insert safe handle
-inserted = st.session_state.pop("kb_insert", "")
 
 user_input = st.text_area(
     "Type your math question",
-    value=inserted,
+    value=st.session_state.user_text,
     height=120,
     key="main_input"
 )
 
-# send button (IMPORTANT)
 send_btn = st.button("Solve Question")
 
-# final question handling
-question = user_input if user_input else prefill
+question = user_input
 
-# ── PROCESS ────────────────────────────────────────────
+# ── PROCESS ────────────────────────────────────
 if send_btn and (question or uploaded_file):
 
     if not st.session_state.groq_key:
-        st.error("Enter Groq API Key")
+        st.error("Enter API Key")
         st.stop()
-
-    display_q = question or "Solve this image"
 
     user_msg = {
         "role": "user",
-        "content": display_q
+        "content": question
     }
 
     img_bytes = None
@@ -199,12 +159,12 @@ if send_btn and (question or uploaded_file):
         with st.spinner("Thinking..."):
 
             try:
+
                 system_prompt = build_system_prompt(st.session_state.topic)
 
-                history_for_api = [
+                history = [
                     {"role": m["role"], "content": m["content"]}
                     for m in st.session_state.messages[-8:]
-                    if isinstance(m.get("content"), str)
                 ]
 
                 if img_bytes:
@@ -213,35 +173,27 @@ if send_btn and (question or uploaded_file):
                     response = get_groq_vision_response(
                         st.session_state.groq_key,
                         system_prompt,
-                        question or "Solve step by step",
+                        question,
                         img_b64
                     )
                 else:
                     response = get_groq_response(
                         st.session_state.groq_key,
                         system_prompt,
-                        history_for_api
+                        history
                     )
 
-                if not response:
-                    st.error("No response from AI")
-                    st.stop()
+                if not isinstance(response, str):
+                    response = str(response)
 
-                def format_math(text):
-    text = text.replace("**", "^")   # power fix
-    return text
+                st.markdown(response)
 
-def format_math(text):
-    try:
-        text = str(text)
-        text = text.replace("**", "^")
-        return text
-    except:
-        return text
+                st.session_state.messages.append({
+                    "role": "assistant",
+                    "content": response
+                })
 
-st.markdown(format_math(response))
-
-                save_chat(display_q, st.session_state.messages)
+                save_chat(question, st.session_state.messages)
 
             except Exception as e:
                 st.error(f"Error: {e}")
