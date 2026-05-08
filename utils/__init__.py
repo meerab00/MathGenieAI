@@ -1,0 +1,1 @@
+# MathGenie AI — utilities package
