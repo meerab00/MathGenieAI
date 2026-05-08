@@ -157,7 +157,14 @@ prefill = st.session_state.pop("prefill_question", "")
 
 default_text = st.session_state.get("kb_insert", "")
 
+inserted = st.session_state.pop("kb_insert", "")
+
 user_input = st.text_area(
+    "Type your math question",
+    value=inserted,
+    height=120,
+    key="main_input"
+)
     "Type your math question",
     value=default_text,
     height=120
@@ -166,7 +173,8 @@ user_input = st.text_area(
 if "kb_insert" in st.session_state:
     st.session_state.kb_insert = ""
 
-question = user_input or prefill
+question = user_input if user_input else prefill
+st.session_state["last_question"] = question
 send_btn = st.button("Solve Question")
 
 # ── PROCESS ────────────────────────────────────────────
