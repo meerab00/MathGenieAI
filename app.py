@@ -231,12 +231,15 @@ if send_btn and (question or uploaded_file):
     text = text.replace("**", "^")   # power fix
     return text
 
-st.markdown(format_math(response))
+def format_math(text):
+    try:
+        text = str(text)
+        text = text.replace("**", "^")
+        return text
+    except:
+        return text
 
-                st.session_state.messages.append({
-                    "role": "assistant",
-                    "content": response
-                })
+st.markdown(format_math(response))
 
                 save_chat(display_q, st.session_state.messages)
 
