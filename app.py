@@ -167,9 +167,10 @@ if "kb_insert" in st.session_state:
     st.session_state.kb_insert = ""
 
 question = user_input or prefill
+send_btn = st.button("Solve Question")
 
 # ── PROCESS ────────────────────────────────────────────
-if question or uploaded_file:
+if send_btn and (question or uploaded_file):
 
     if not st.session_state.groq_key:
         st.error("Enter Groq API Key")
