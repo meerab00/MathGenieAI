@@ -155,7 +155,16 @@ uploaded_file = st.file_uploader(
 
 prefill = st.session_state.pop("prefill_question", "")
 
-user_input = st.chat_input("Type your math question...")
+default_text = st.session_state.get("kb_insert", "")
+
+user_input = st.text_area(
+    "Type your math question",
+    value=default_text,
+    height=120
+)
+
+if "kb_insert" in st.session_state:
+    st.session_state.kb_insert = ""
 
 question = user_input or prefill
 
