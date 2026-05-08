@@ -227,7 +227,11 @@ if send_btn and (question or uploaded_file):
                     st.error("No response from AI")
                     st.stop()
 
-                st.markdown(response, unsafe_allow_html=True)
+                def format_math(text):
+    text = text.replace("**", "^")   # power fix
+    return text
+
+st.markdown(format_math(response))
 
                 st.session_state.messages.append({
                     "role": "assistant",
