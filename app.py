@@ -7,126 +7,124 @@ from utils.system_prompt import build_system_prompt
 from utils.math_keyboard import MATH_SYMBOLS
 import base64
 
-# ───────────────── CONFIG ─────────────────
+# ───────────────────────────────
+# 1. PAGE CONFIG (App ka title + icon)
+# ───────────────────────────────
 st.set_page_config(
     page_title="MathGenie AI",
     page_icon="🧞",
     layout="wide"
 )
 
-# ───────────────── SESSION STATE ─────────────────
+# ───────────────────────────────
+# 2. SESSION STATE (data store karne ke liye)
+# ───────────────────────────────
 if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-if "topic" not in st.session_state:
-    st.session_state.topic = "General"
-
-if "groq_key" not in st.session_state:
-    try:
-        st.session_state.groq_key = st.secrets["GROQ_API_KEY"]
-    except:
-        st.session_state.groq_key = ""
+    st.session_state.messages = []   # chat history
 
 if "text" not in st.session_state:
-    st.session_state.text = ""
+    st.session_state.text = ""       # keyboard input store
 
-# ───────────────── SIDEBAR ─────────────────
+if "groq_key" not in st.session_state:
+    st.session_state.groq_key = ""
+
+# ───────────────────────────────
+# 3. SIDEBAR (settings panel)
+# ───────────────────────────────
 with st.sidebar:
     st.title("🧞 MathGenie AI")
 
+    # API KEY input
     api_key = st.text_input("Groq API Key", type="password")
     if api_key:
         st.session_state.groq_key = api_key
 
-    st.divider()
-
-    st.session_state.topic = st.selectbox(
-        "Topic",
-        ["General","Calculus","Algebra","Statistics","Optimization Theory","Fuzzy Set Theory","Linear Algebra","ODE / PDE","Number Theory"]
-    )
-
-    st.divider()
-
-    st.subheader("📐 Formula Sheet")
-    for subject, formulas in FORMULA_SHEET.items():
-        with st.expander(subject):
-            for f in formulas:
-                st.code(f)
-
-    st.divider()
-
+    # Clear chat button
     if st.button("🗑️ Clear Chat"):
         st.session_state.messages = []
         clear_all_history()
 
-# ───────────────── HEADER ─────────────────
-st.title("🧞 MathGenie AI")
-st.caption("ChatGPT-style Math Solver")
+# ───────────────────────────────
+# 4. TITLE
+# ───────────────────────────────
+st.title("🧞 MathGenie AI (ChatGPT Style)")
 
-# ───────────────── CHAT DISPLAY ─────────────────
+# ───────────────────────────────
+# 5. CHAT DISPLAY (purani messages show karna)
+# ───────────────────────────────
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# ───────────────── KEYBOARD (NO AUTO RUN) ─────────────────
+# ───────────────────────────────
+# 6. KEYBOARD (symbol add karega input me)
+# ───────────────────────────────
 with st.expander("⌨️ Math Keyboard"):
 
-    for section, symbols in MATH_KEYBOARD.items() if "MATH_KEYBOARD" in globals() else MATH_SYMBOLS.items():
+    # STEP: ensure storage exists
+    if "text" not in st.session_state:
+        st.session_state.text = ""
 
-        st.write(section)
-        cols = st.columns(10)
+    cols = st.columns(8)
 
-        for i, sym in enumerate(symbols):
+    # STEP: all symbols ek list me convert
+    symbols = []
+    for s in MATH_SYMBOLS.values():
+        symbols.extend(s)
 
-            if st.button(sym, key=f"kb_{section}_{i}"):
+    # STEP: button click = symbol add
+    for i, sym in enumerate(symbols):
+        if cols[i % 8].button(sym, key=f"kb_{i}"):
+            st.session_state.text += sym   # yahan input me add ho raha hai
 
-                st.session_state.text += sym
+# ───────────────────────────────
+# 7. INPUT SECTION (stable version)
+# ───────────────────────────────
 
-# ───────────────── INPUT SECTION (FIXED) ─────────────────
-col1, col2 = st.columns([3, 1])
+# STEP: input box (keyboard + typing dono yahan store honge)
+question = st.text_input(
+    "Type your math question",
+    value=st.session_state.text
+)
 
-with col1:
-    user_input = st.chat_input("Ask your math question...")
+# STEP: sync session state
+st.session_state.text = question
 
-with col2:
-    uploaded_file = st.file_uploader("📷 Upload Image", type=["jpg","jpeg","png","webp"])
-    camera_image = st.camera_input("📸 Camera")
+# ───────────────────────────────
+# 8. IMAGE UPLOAD (optional vision input)
+# ───────────────────────────────
+uploaded_file = st.file_uploader("📷 Upload Image", type=["jpg","png","jpeg"])
+camera_image = st.camera_input("📸 Take Photo")
 
-# merge keyboard + input
-if user_input:
-    st.session_state.text = user_input
+# image bytes store
+img_bytes = None
 
-question = st.session_state.text
+if uploaded_file:
+    img_bytes = uploaded_file.read()
+elif camera_image:
+    img_bytes = camera_image.getvalue()
 
-# ───────────────── PROCESS ─────────────────
-if question or uploaded_file or camera_image:
+# ───────────────────────────────
+# 9. SEND / PROCESS (AI call)
+# ───────────────────────────────
+if question or img_bytes:
 
-    if not st.session_state.groq_key:
-        st.error("Please enter Groq API key")
-        st.stop()
-
-    img_bytes = None
-
-    if uploaded_file:
-        img_bytes = uploaded_file.read()
-
-    elif camera_image:
-        img_bytes = camera_image.getvalue()
-
+    # STEP: user message save
     st.session_state.messages.append({
         "role": "user",
         "content": question if question else "Image Question"
     })
 
     with st.chat_message("assistant"):
-
         with st.spinner("Solving..."):
 
             try:
-                system_prompt = build_system_prompt(st.session_state.topic)
+                # STEP: system prompt load
+                system_prompt = build_system_prompt("General")
 
                 history = st.session_state.messages[-8:]
 
+                # STEP: image vs text decision
                 if img_bytes:
                     img_b64 = base64.b64encode(img_bytes).decode()
 
@@ -143,19 +141,22 @@ if question or uploaded_file or camera_image:
                         history
                     )
 
-                if not isinstance(response, str):
-                    response = str(response)
+                # STEP: safety convert to string
+                response = str(response)
 
+                # STEP: show answer
                 st.markdown(response)
 
+                # STEP: save assistant response
                 st.session_state.messages.append({
                     "role": "assistant",
                     "content": response
                 })
 
+                # STEP: save history
                 save_chat(question, st.session_state.messages)
 
-                # clear input after send
+                # STEP: clear keyboard input
                 st.session_state.text = ""
 
             except Exception as e:
