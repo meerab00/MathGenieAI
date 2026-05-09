@@ -1,0 +1,52 @@
+st.markdown("""
+<style>
+
+/* Main app */
+.block-container{
+    padding-top: 1rem;
+    padding-bottom: 7rem;
+}
+
+/* Chat input fixed at bottom */
+.stTextArea {
+    position: fixed;
+    bottom: 20px;
+    left: 320px;
+    right: 120px;
+    z-index: 1000;
+}
+
+/* Solve button */
+div.stButton > button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 90px;
+    height: 55px;
+    border-radius: 15px;
+}
+
+/* Math keyboard panel */
+.math-keyboard {
+    position: fixed;
+    bottom: 90px;
+    right: 20px;
+    width: 250px;
+    background: white;
+    padding: 15px;
+    border-radius: 15px;
+    box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
+}
+
+/* Sidebar */
+section[data-testid="stSidebar"] {
+    width: 280px !important;
+}
+
+/* Remove large white spaces */
+.element-container {
+    margin-bottom: 0.5rem !important;
+}
+
+</style>
+""", unsafe_allow_html=True)
