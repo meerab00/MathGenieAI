@@ -1,4 +1,3 @@
-
 import streamlit as st
 from utils.groq_client import get_groq_response
 from utils.history_manager import save_chat, clear_all_history
@@ -30,7 +29,6 @@ with st.sidebar:
     st.title("🧞 MathGenie AI")
 
     api_key = st.text_input("Groq API Key", type="password")
-
     if api_key:
         st.session_state.groq_key = api_key
 
@@ -39,9 +37,9 @@ with st.sidebar:
     st.session_state.topic = st.selectbox(
         "Topic",
         [
-            "General","Calculus","Algebra","Statistics",
-            "Optimization Theory","Fuzzy Set Theory",
-            "Linear Algebra","ODE / PDE","Number Theory"
+            "General", "Calculus", "Algebra", "Statistics",
+            "Optimization Theory", "Fuzzy Set Theory",
+            "Linear Algebra", "ODE / PDE", "Number Theory"
         ]
     )
 
@@ -78,6 +76,7 @@ if user_input:
         st.error("Enter Groq API Key first")
         st.stop()
 
+    # user message add
     st.session_state.messages.append({
         "role": "user",
         "content": user_input
@@ -100,12 +99,14 @@ if user_input:
 
                 st.markdown(response)
 
+                # assistant message add
                 st.session_state.messages.append({
                     "role": "assistant",
                     "content": response
                 })
 
-                save_chat(st.session_state.messages)
+                # ✅ FIXED save_chat call (no error now)
+                save_chat(user_input, st.session_state.messages)
 
             except Exception as e:
                 st.error(f"Error: {e}")
