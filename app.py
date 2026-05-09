@@ -122,15 +122,103 @@ uploaded_file = st.file_uploader(
     "Upload Image",
     type=["jpg","jpeg","png","webp"]
 )
+import streamlit as st
 
-user_input = st.text_area(
-    "Type your math question",
-    value=st.session_state.user_text,
-    height=120,
-    key="main_input"
-)
+st.set_page_config(layout="wide")
 
-send_btn = st.button("Solve Question")
+# ---------- CSS ----------
+st.markdown("""
+<style>
+
+/* Main spacing */
+.block-container{
+    padding-top: 1rem;
+    padding-bottom: 6rem;
+}
+
+/* Sidebar */
+section[data-testid="stSidebar"]{
+    background-color: #f8f9fa;
+}
+
+/* Chat messages */
+.chat-box{
+    padding: 15px;
+    border-radius: 10px;
+    background: #f1f3f5;
+    margin-bottom: 10px;
+}
+
+/* Fixed bottom input */
+[data-testid="stChatInput"]{
+    position: fixed;
+    bottom: 20px;
+    left: 320px;
+    right: 20px;
+    z-index: 999;
+}
+
+/* Math keyboard */
+.math-panel{
+    position: fixed;
+    bottom: 90px;
+    right: 20px;
+    width: 260px;
+    background: white;
+    border-radius: 15px;
+    padding: 15px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    z-index:999;
+}
+
+.math-btn{
+    padding:8px;
+    margin:4px;
+    border-radius:8px;
+    border:none;
+    background:#e9ecef;
+    cursor:pointer;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+# ---------- Sidebar ----------
+with st.sidebar:
+    st.title("MathGenie AI")
+
+    if st.button("Generate Question"):
+        st.success("Solve: x² + 5x + 6 = 0")
+
+    st.button("Q1")
+    st.button("Q2")
+    st.button("Q3")
+
+# ---------- Chat Area ----------
+st.markdown('<div class="chat-box">Welcome to MathGenie AI</div>', unsafe_allow_html=True)
+
+# ---------- Math Keyboard ----------
+st.markdown("""
+<div class="math-panel">
+<h4>Math Keyboard</h4>
+
+<button class="math-btn">+</button>
+<button class="math-btn">−</button>
+<button class="math-btn">×</button>
+<button class="math-btn">÷</button>
+<button class="math-btn">√</button>
+<button class="math-btn">π</button>
+<button class="math-btn">∫</button>
+<button class="math-btn">x²</button>
+
+</div>
+""", unsafe_allow_html=True)
+
+# ---------- Bottom Input ----------
+prompt = st.chat_input("Type your math question...")
+
+if prompt:
+    st.write("You asked:", prompt)
 
 question = user_input
 
