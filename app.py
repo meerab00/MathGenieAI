@@ -171,7 +171,9 @@ if question:
 
 
 # ── PROCESS ────────────────────────────────────
-if send_btn and (question or uploaded_file):
+send_button=st.button("send")
+if send button:
+    st.write("Message Sent")
 
     if not st.session_state.groq_key:
         st.error("Enter API Key")
