@@ -1,12 +1,16 @@
 
 import streamlit as st
+from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_groq import ChatGroq
-from langchain.schema import SystemMessage, HumanMessage
 
 # ─────────────────────────────
 # PAGE CONFIG
 # ─────────────────────────────
-st.set_page_config(page_title="MathGenie AI", page_icon="🧞", layout="centered")
+st.set_page_config(
+    page_title="MathGenie AI",
+    page_icon="🧞",
+    layout="centered"
+)
 
 # ─────────────────────────────
 # SESSION STATE
@@ -21,10 +25,10 @@ if "api_key" not in st.session_state:
 # TITLE
 # ─────────────────────────────
 st.title("🧞 MathGenie AI")
-st.caption("Step-by-step Math Solver (LangChain + Groq)")
+st.caption("LangChain + Groq Math Solver")
 
 # ─────────────────────────────
-# API KEY INPUT
+# API KEY
 # ─────────────────────────────
 api_key = st.text_input("Enter GROQ_API_KEY", type="password")
 
@@ -32,32 +36,31 @@ if api_key:
     st.session_state.api_key = api_key
 
 # ─────────────────────────────
-# SYSTEM PROMPT (IMPORTANT)
+# SYSTEM PROMPT
 # ─────────────────────────────
 SYSTEM_PROMPT = """
 You are an expert math tutor.
 
-RULES:
+Rules:
 - Solve step-by-step
-- Use proper LaTeX for math (VERY IMPORTANT)
-- Always format equations like:
-  \frac{a}{b}, x^2, \int, \sqrt{}
+- Use proper LaTeX format:
+  \frac{}, x^2, \int, \sqrt{}
 - No plain text math like 5x/5
-- Give short clear steps
-- Final answer must be clearly highlighted
+- Keep steps short and clear
+- Show final answer clearly
 """
 
 # ─────────────────────────────
-# DISPLAY CHAT HISTORY
+# CHAT HISTORY
 # ─────────────────────────────
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
 # ─────────────────────────────
-# INPUT BOX
+# INPUT
 # ─────────────────────────────
-question = st.text_input("Enter your math question (e.g. integrate x^2 + 5x)")
+question = st.text_input("Enter your math question")
 
 # ─────────────────────────────
 # SUBMIT BUTTON
@@ -65,14 +68,14 @@ question = st.text_input("Enter your math question (e.g. integrate x^2 + 5x)")
 if st.button("Solve 🚀"):
 
     if not st.session_state.api_key:
-        st.error("Please enter GROQ API key")
+        st.error("Please enter API key")
         st.stop()
 
     if not question:
-        st.warning("Please enter a question")
+        st.warning("Enter a question")
         st.stop()
 
-    # user message save
+    # save user message
     st.session_state.messages.append({
         "role": "user",
         "content": question
@@ -82,7 +85,7 @@ if st.button("Solve 🚀"):
         with st.spinner("Solving..."):
 
             try:
-                # ─── LangChain + Groq Model ───
+                # ─── GROQ MODEL ───
                 llm = ChatGroq(
                     api_key=st.session_state.api_key,
                     model="llama3-70b-8192"
@@ -97,7 +100,7 @@ if st.button("Solve 🚀"):
 
                 answer = response.content
 
-                # ─── SHOW OUTPUT IN MATH FORMAT ───
+                # ─── SHOW RESULT (MATH FORMAT) ───
                 st.markdown("### Solution")
                 st.markdown(f"$$ {answer} $$")
 
