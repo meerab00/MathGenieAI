@@ -220,7 +220,6 @@ prompt = st.chat_input("Type your math question...")
 if prompt:
     st.write("You asked:", prompt)
 
-question = user_input
 
 # ── PROCESS ────────────────────────────────────
 if send_btn and (question or uploaded_file):
