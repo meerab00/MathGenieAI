@@ -25,10 +25,10 @@ if "api_key" not in st.session_state:
 # TITLE
 # ─────────────────────────────
 st.title("🧞 MathGenie AI")
-st.caption("LangChain + Groq Math Solver")
+st.caption("LangChain + Groq Step-by-Step Math Solver")
 
 # ─────────────────────────────
-# API KEY
+# API KEY INPUT
 # ─────────────────────────────
 api_key = st.text_input("Enter GROQ_API_KEY", type="password")
 
@@ -43,11 +43,11 @@ You are an expert math tutor.
 
 Rules:
 - Solve step-by-step
-- Use proper LaTeX format:
+- Use proper LaTeX for all math:
   \frac{}, x^2, \int, \sqrt{}
-- No plain text math like 5x/5
+- NEVER use plain text math like 5x/5
 - Keep steps short and clear
-- Show final answer clearly
+- Highlight final answer
 """
 
 # ─────────────────────────────
@@ -60,7 +60,7 @@ for msg in st.session_state.messages:
 # ─────────────────────────────
 # INPUT
 # ─────────────────────────────
-question = st.text_input("Enter your math question")
+question = st.text_input("Enter your math question (e.g. integrate x^2 + 5x)")
 
 # ─────────────────────────────
 # SUBMIT BUTTON
@@ -85,10 +85,10 @@ if st.button("Solve 🚀"):
         with st.spinner("Solving..."):
 
             try:
-                # ─── GROQ MODEL ───
+                # ─── UPDATED GROQ MODEL ───
                 llm = ChatGroq(
                     api_key=st.session_state.api_key,
-                    model="llama3-70b-8192"
+                    model="llama-3.1-70b-versatile"
                 )
 
                 messages = [
@@ -100,7 +100,7 @@ if st.button("Solve 🚀"):
 
                 answer = response.content
 
-                # ─── SHOW RESULT (MATH FORMAT) ───
+                # ─── SHOW MATH OUTPUT ───
                 st.markdown("### Solution")
                 st.markdown(f"$$ {answer} $$")
 
