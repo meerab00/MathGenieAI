@@ -1,99 +1,111 @@
 
 import streamlit as st
-from utils.groq_client import get_groq_response, get_groq_vision_response
-import base64
+from langchain_groq import ChatGroq
+from langchain.schema import SystemMessage, HumanMessage
 
-# ── CONFIG ──
-st.set_page_config(page_title="MathGenie AI", page_icon="🧞")
+# ─────────────────────────────
+# PAGE CONFIG
+# ─────────────────────────────
+st.set_page_config(page_title="MathGenie AI", page_icon="🧞", layout="centered")
 
-# ── SESSION ──
+# ─────────────────────────────
+# SESSION STATE
+# ─────────────────────────────
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-if "text" not in st.session_state:
-    st.session_state.text = ""
+if "api_key" not in st.session_state:
+    st.session_state.api_key = ""
 
-if "groq_key" not in st.session_state:
-    st.session_state.groq_key = ""
-
-# ── TITLE ──
+# ─────────────────────────────
+# TITLE
+# ─────────────────────────────
 st.title("🧞 MathGenie AI")
+st.caption("Step-by-step Math Solver (LangChain + Groq)")
 
-# ── API KEY ──
-api_key = st.text_input("Enter Groq API Key", type="password")
+# ─────────────────────────────
+# API KEY INPUT
+# ─────────────────────────────
+api_key = st.text_input("Enter GROQ_API_KEY", type="password")
+
 if api_key:
-    st.session_state.groq_key = api_key
+    st.session_state.api_key = api_key
 
-# ── CHAT DISPLAY ──
+# ─────────────────────────────
+# SYSTEM PROMPT (IMPORTANT)
+# ─────────────────────────────
+SYSTEM_PROMPT = """
+You are an expert math tutor.
+
+RULES:
+- Solve step-by-step
+- Use proper LaTeX for math (VERY IMPORTANT)
+- Always format equations like:
+  \frac{a}{b}, x^2, \int, \sqrt{}
+- No plain text math like 5x/5
+- Give short clear steps
+- Final answer must be clearly highlighted
+"""
+
+# ─────────────────────────────
+# DISPLAY CHAT HISTORY
+# ─────────────────────────────
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# ── KEYBOARD ──
-symbols = ["+", "-", "*", "/", "=", "^2", "(", ")"]
+# ─────────────────────────────
+# INPUT BOX
+# ─────────────────────────────
+question = st.text_input("Enter your math question (e.g. integrate x^2 + 5x)")
 
-st.write("⌨️ Keyboard")
-cols = st.columns(5)
+# ─────────────────────────────
+# SUBMIT BUTTON
+# ─────────────────────────────
+if st.button("Solve 🚀"):
 
-for i, s in enumerate(symbols):
-    if cols[i % 5].button(s, key=f"k{i}"):
-        st.session_state.text += s
-
-# ── INPUT ──
-user_input = st.text_input("Type your question", value=st.session_state.text)
-st.session_state.text = user_input
-
-uploaded_file = st.file_uploader("📷 Upload Image", type=["jpg","png","jpeg"])
-
-# ── SEND BUTTON ──
-send = st.button("Solve")
-
-# ── PROCESS ──
-if send and user_input:
-
-    if not st.session_state.groq_key:
-        st.error("Please enter API key")
+    if not st.session_state.api_key:
+        st.error("Please enter GROQ API key")
         st.stop()
 
-    img_bytes = None
-    if uploaded_file:
-        img_bytes = uploaded_file.read()
+    if not question:
+        st.warning("Please enter a question")
+        st.stop()
 
+    # user message save
     st.session_state.messages.append({
         "role": "user",
-        "content": user_input
+        "content": question
     })
 
     with st.chat_message("assistant"):
+        with st.spinner("Solving..."):
 
-        try:
-            history = [
-                {"role": m["role"], "content": m["content"]}
-                for m in st.session_state.messages[-6:]
-            ]
-
-            if img_bytes:
-                img_b64 = base64.b64encode(img_bytes).decode()
-
-                response = get_groq_vision_response(
-                    st.session_state.groq_key,
-                    "You are a math tutor",
-                    user_input,
-                    img_b64
-                )
-            else:
-                response = get_groq_response(
-                    st.session_state.groq_key,
-                    "You are a math tutor",
-                    history
+            try:
+                # ─── LangChain + Groq Model ───
+                llm = ChatGroq(
+                    api_key=st.session_state.api_key,
+                    model="llama3-70b-8192"
                 )
 
-            st.markdown(response)
+                messages = [
+                    SystemMessage(content=SYSTEM_PROMPT),
+                    HumanMessage(content=question)
+                ]
 
-            st.session_state.messages.append({
-                "role": "assistant",
-                "content": response
-            })
+                response = llm.invoke(messages)
 
-        except Exception as e:
-            st.error(f"Error: {e}")
+                answer = response.content
+
+                # ─── SHOW OUTPUT IN MATH FORMAT ───
+                st.markdown("### Solution")
+                st.markdown(f"$$ {answer} $$")
+
+                # save assistant message
+                st.session_state.messages.append({
+                    "role": "assistant",
+                    "content": answer
+                })
+
+            except Exception as e:
+                st.error(f"Error: {str(e)}")
