@@ -118,107 +118,56 @@ with st.expander("⌨️ Math Keyboard"):
                     st.session_state.user_text += sym
 
 # ── INPUT ──────────────────────────────────────
-uploaded_file = st.file_uploader(
-    "Upload Image",
-    type=["jpg","jpeg","png","webp"]
-)
 import streamlit as st
 
 st.set_page_config(layout="wide")
 
-# ---------- CSS ----------
+# CSS
 st.markdown("""
 <style>
-
-/* Main spacing */
 .block-container{
-    padding-top: 1rem;
-    padding-bottom: 6rem;
+    padding-bottom: 80px;
 }
 
-/* Sidebar */
-section[data-testid="stSidebar"]{
-    background-color: #f8f9fa;
-}
-
-/* Chat messages */
-.chat-box{
-    padding: 15px;
-    border-radius: 10px;
-    background: #f1f3f5;
-    margin-bottom: 10px;
-}
-
-/* Fixed bottom input */
-[data-testid="stChatInput"]{
-    position: fixed;
-    bottom: 20px;
-    left: 320px;
-    right: 20px;
-    z-index: 999;
-}
-
-/* Math keyboard */
 .math-panel{
     position: fixed;
     bottom: 90px;
     right: 20px;
-    width: 260px;
     background: white;
-    border-radius: 15px;
-    padding: 15px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.2);
-    z-index:999;
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
 }
-
-.math-btn{
-    padding:8px;
-    margin:4px;
-    border-radius:8px;
-    border:none;
-    background:#e9ecef;
-    cursor:pointer;
-}
-
 </style>
 """, unsafe_allow_html=True)
 
-# ---------- Sidebar ----------
+# Sidebar
 with st.sidebar:
     st.title("MathGenie AI")
 
     if st.button("Generate Question"):
-        st.success("Solve: x² + 5x + 6 = 0")
+        st.write("Solve x² + 5x + 6 = 0")
 
-    st.button("Q1")
-    st.button("Q2")
-    st.button("Q3")
+# Main Chat
+st.title("Math Solver")
 
-# ---------- Chat Area ----------
-st.markdown('<div class="chat-box">Welcome to MathGenie AI</div>', unsafe_allow_html=True)
+st.write("Welcome to MathGenie AI")
 
-# ---------- Math Keyboard ----------
+# Floating keyboard
 st.markdown("""
 <div class="math-panel">
-<h4>Math Keyboard</h4>
+<b>Math Keyboard</b><br><br>
 
-<button class="math-btn">+</button>
-<button class="math-btn">−</button>
-<button class="math-btn">×</button>
-<button class="math-btn">÷</button>
-<button class="math-btn">√</button>
-<button class="math-btn">π</button>
-<button class="math-btn">∫</button>
-<button class="math-btn">x²</button>
++  −  ×  ÷  √  π  ∫  x²
 
 </div>
 """, unsafe_allow_html=True)
 
-# ---------- Bottom Input ----------
-prompt = st.chat_input("Type your math question...")
+# Chat input
+question = st.chat_input("Type your math question")
 
-if prompt:
-    st.write("You asked:", prompt)
+if question:
+    st.write("Question:", question)
 
 
 # ── PROCESS ────────────────────────────────────
